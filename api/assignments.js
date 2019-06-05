@@ -6,7 +6,8 @@ const { getAssignmentsById,
   insertNewAssignment,
   replaceAssignmentById, 
   deleteAssignmentById, 
-  isAdmin } = require('../lib/assignment')
+  isAdmin,
+  AssignmentSchema } = require('../models/assignment')
 
 /* 
 * Route to create a new photo.
