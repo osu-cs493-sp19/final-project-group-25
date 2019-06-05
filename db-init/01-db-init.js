@@ -22,14 +22,14 @@ db.users.insertMany([
 db.courses.insertMany([
   {
     "subject": "CS",
-    "number": 493,
+    "number": "493",
     "title": "Cloud Application Development",
     "term": "sp19",
     "instructorId": "123"
   },
   {
     "subject": "CS",
-    "number": 492,
+    "number": "492",
     "title": "Mobile Application Development",
     "term": "sp19",
     "instructorId": "456"

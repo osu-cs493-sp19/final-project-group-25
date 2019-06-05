@@ -8,7 +8,10 @@ const { validateAgainstSchema } = require('../lib/validation');
 const {
   CourseSchema,
   getCoursePage,
-  insertNewCourse
+  insertNewCourse,
+  getCourseById,
+  updateCourse,
+  deleteCourse
 } = require('../models/course');
 
 /*
@@ -42,28 +45,118 @@ router.get('/', async (req, res) => {
 /*
  * Route to create a new course.
  */
+//router.post('/', requireAuthentication, async (req, res) => {
 router.post('/', async (req, res) => {
-  //if (validateAgainstSchema(req.body, CourseSchema)) {
-  if (1) {
-    try {
-      const id = await insertNewCourse(req.body);
-      res.status(201).send({
-        id: id,
-        links: {
-          course: `/courses/${id}`
-        }
-      });
-    } catch (err) {
-      console.error(err);
-      res.status(500).send({
-        error: "Error inserting course into DB.  Please try again later."
+  //if (req.body.ownerid == req.user || req.admin == 1) {
+    if (validateAgainstSchema(req.body, CourseSchema)) {
+      try {
+        const id = await insertNewCourse(req.body);
+        res.status(201).send({
+          id: id,
+          links: {
+            course: `/courses/${id}`
+          }
+        });
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({
+          error: "Error inserting course into DB.  Please try again later."
+        });
+      }
+    } else {
+      res.status(400).send({
+        error: "Request body is not a valid course object."
       });
     }
-  } else {
-    res.status(400).send({
-      error: "Request body is not a valid course object."
+  /*} else {
+    res.status(403).send({
+      error: "Unauthorized to access the specified resource"
+    });
+  }*/
+});
+
+
+/*
+ * Route to fetch info about a specific course.
+ */
+router.get('/:id', async (req, res, next) => {
+  try {
+    const course = await getCourseById(req.params.id);
+    if (course) {
+      res.status(200).send(course);
+    } else {
+      next();
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({
+      error: "Unable to fetch course.  Please try again later."
     });
   }
 });
+
+/*
+ * Route to replace data for a business.
+ */
+//router.put('/:id', requireAuthentication, async (req, res, next) => {
+router.patch('/:id', async (req, res, next) => {
+  //if (req.body.ownerid == req.user || req.admin == 1) {
+    if (validateAgainstSchema(req.body, CourseSchema)) {
+      try {
+        const id = req.params.id;
+        const updateSuccessful = await updateCourse(id, req.body);
+        if (updateSuccessful) {
+          res.status(200).send({
+            links: {
+              course: `/courses/${id}`
+            }
+          });
+        } else {
+          next();
+        }
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({
+          error: "Unable to update specified course.  Please try again later."
+        });
+      }
+    } else {
+      res.status(400).send({
+        error: "Request body is not a valid course object"
+      });
+    }
+  /*} else {
+    res.status(403).send({
+      error: "Unauthorized to access the specified resource"
+    });
+  }*/
+});
+
+/*
+ * Route to delete a course.
+ */
+//router.delete('/:id', requireAuthentication, async (req, res, next) => {
+router.delete('/:id', async (req, res, next) => {
+  //if (req.body.ownerid == req.user || req.admin == 1) {
+    try {
+      const deleteSuccessful = await deleteCourse(req.params.id);
+      if (deleteSuccessful) {
+        res.status(204).end();
+      } else {
+        next();
+      }
+    } catch (err) {
+      console.error(err);
+      res.status(500).send({
+        error: "Unable to delete course.  Please try again later."
+      });
+    }
+  /*} else {
+    res.status(403).send({
+      error: "Unauthorized to access the specified resource"
+    });
+  }*/
+});
+
 
 module.exports = router;
