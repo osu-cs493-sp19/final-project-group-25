@@ -8,8 +8,6 @@ const { getAssignmentsById,
   deleteAssignmentById, 
   isAdmin } = require('../lib/assignment')
 
-const 
-
 /* 
 * Route to create a new photo.
 */
