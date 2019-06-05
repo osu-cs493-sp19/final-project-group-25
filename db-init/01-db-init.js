@@ -1,4 +1,4 @@
-db.user.insertMany([
+db.users.insertMany([
   {
       "name": "Rob Hess",
       "email": "robhess@gmail.com",
@@ -17,4 +17,21 @@ db.user.insertMany([
         "password": "password",
         "role":"admin"
     }
-])
+]);
+
+db.courses.insertMany([
+  {
+    "subject": "CS",
+    "number": 493,
+    "title": "Cloud Application Development",
+    "term": "sp19",
+    "instructorId": "123"
+  },
+  {
+    "subject": "CS",
+    "number": 492,
+    "title": "Mobile Application Development",
+    "term": "sp19",
+    "instructorId": "456"
+  }
+]);
