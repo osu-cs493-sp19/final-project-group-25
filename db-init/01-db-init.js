@@ -25,13 +25,42 @@ db.courses.insertMany([
     "number": "493",
     "title": "Cloud Application Development",
     "term": "sp19",
-    "instructorId": "123"
+    "instructorId": "123",
+    "enrolled": [
+      "123",
+      "456",
+      "789"
+    ]
   },
   {
     "subject": "CS",
     "number": "492",
     "title": "Mobile Application Development",
     "term": "sp19",
-    "instructorId": "456"
+    "instructorId": "456",
+    "enrolled": [
+      "456",
+      "000",
+      "123"
+    ]
+  }
+]);
+
+db.courseLists.insertMany([
+  {
+    "courseId": "abc123",
+    "enrolled": [
+      "123",
+      "456",
+      "789"
+    ]
+  },
+  {
+    "courseId": "def456",
+    "enrolled": [
+      "456",
+      "000",
+      "123"
+    ]
   }
 ]);

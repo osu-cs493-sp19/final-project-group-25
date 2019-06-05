@@ -7,11 +7,15 @@ const router = require('express').Router();
 const { validateAgainstSchema } = require('../lib/validation');
 const {
   CourseSchema,
+  EnrollmentSchema,
   getCoursePage,
   insertNewCourse,
   getCourseById,
   updateCourse,
-  deleteCourse
+  deleteCourse,
+  getCourseList,
+  insertEnrollment,
+  modifyEnrollment
 } = require('../models/course');
 
 /*
@@ -149,6 +153,68 @@ router.delete('/:id', async (req, res, next) => {
       console.error(err);
       res.status(500).send({
         error: "Unable to delete course.  Please try again later."
+      });
+    }
+  /*} else {
+    res.status(403).send({
+      error: "Unauthorized to access the specified resource"
+    });
+  }*/
+});
+
+
+/*
+ * Route to fetch list of students enrolled in a specific course.
+ */
+router.get('/:id/students', async (req, res, next) => {
+  try {
+    const course = await getCourseList(req.params.id);
+    if (course) {
+      res.status(200).send(course);
+    } else {
+      next();
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({
+      error: "Unable to fetch course list.  Please try again later."
+    });
+  }
+});
+
+
+
+/*
+ * Route to enroll students in a course.
+ */
+//router.post('/', requireAuthentication, async (req, res) => {
+router.post('/:id/students', async (req, res) => {
+  //if (req.body.ownerid == req.user || req.admin == 1) {
+    if (validateAgainstSchema(req.body, EnrollmentSchema)) {
+      try {
+        const courseId = req.params.id; // Sets the course id
+        var listId = null;
+        // Check if course exists
+        if (1/* STILL NEED TO ADD CHECK IF COURSE EXISTS*/) {
+          listId = await insertEnrollment(courseId, req.body);
+        } else {
+          listId = await modifyEnrollment(courseId, req.body);
+        }
+        res.status(201).send({
+          listId: listId, // Sends back listId
+          links: { // Returns link to fetch course list
+            course: `/courses/${courseId}/students`
+          }
+        });
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({
+          error: "Error inserting course list into DB.  Please try again later."
+        });
+      }
+    } else {
+      res.status(400).send({
+        error: "Request body is not a valid enrollment list object."
       });
     }
   /*} else {
