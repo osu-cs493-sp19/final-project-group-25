@@ -10,7 +10,8 @@ const { extractValidFields } = require('../lib/validation');
 const AssingmentSchema = {
 	courseId: { required: true },
 	points: { required: true},
-	due: { required: true }
+	due: { required: true },
+	title: { required: true}
 };
 
 //   getAssignmentsById,
@@ -45,10 +46,10 @@ exports.insertNewAssignment = insertNewAssignment;
 async function replaceAssignmentById (id, body) {
 	const db = getDBReference();
   const courseValues = {
-		"subject": body.subject,
-		"number": body.number,
-		"title": body.title,
-    "term": body.term,
+		"courseId": body.courseId,
+		"points": body.points,
+		"dateDue": body.dateDue,
+    "title": body.title,
     "instructorId": body.instructorId
     };
     const collection = db.collection('assignments');
@@ -62,7 +63,10 @@ async function replaceAssignmentById (id, body) {
 exports.replaceAssignmentById = replaceAssignmentById;
 
 async function deleteAssignmentById (id) {
-
+	const db = getDBReference();
+  const collection = db.collection('assignments');
+  const result = await collection.deleteOne({ _id: new ObjectId(id) });
+  return result.deletedCount > 0;
 }
 
 exports.deleteAssignmentById = deleteAssignmentById;
