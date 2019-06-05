@@ -1,7 +1,14 @@
 const router = require('express').Router();
 
 const { generateAuthToken, requireAuthentication } = require('../lib/auth');
-const { insertNewUser, getUserById, getUserByEmail, validateUser, isAdmin } = require('../lib/user')
+const { getAssignmentsById,
+  getAssignmentById,
+  insertNewAssignment,
+  replaceAssignmentById, 
+  deleteAssignmentById, 
+  isAdmin } = require('../lib/assignment')
+
+const 
 
 /* 
 * Route to create a new photo.
@@ -134,7 +141,7 @@ router.delete('/:id', requireAuthentication, async (req, res, next) => {
 
 router.get('/:id/submissions', requireAuthentication, async (req, res) => {
   try {
-    const assignment = await getAssignmentById(parseInt(req.params.id));
+    const assignment = await getAssignmentsById(parseInt(req.params.id));
     if (assignment) {
       res.status(200).send(assignment);
     } else {
