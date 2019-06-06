@@ -14,6 +14,7 @@ const {
   updateCourse,
   deleteCourse,
   getCourseList,
+  checkIfCourseListExists,
   insertEnrollment,
   modifyEnrollment
 } = require('../models/course');
@@ -193,13 +194,16 @@ router.post('/:id/students', async (req, res) => {
     if (validateAgainstSchema(req.body, EnrollmentSchema)) {
       try {
         const courseId = req.params.id; // Sets the course id
-        var listId = null;
-        // Check if course exists
-        if (1/* STILL NEED TO ADD CHECK IF COURSE EXISTS*/) {
+        var listId = null; // Create var to hold returned listId
+        const listExists = await checkIfCourseListExists(courseId); // Check if course list exists
+
+        // If the list does not exist, insert else modify
+        if (!listExists) {
           listId = await insertEnrollment(courseId, req.body);
         } else {
           listId = await modifyEnrollment(courseId, req.body);
         }
+
         res.status(201).send({
           listId: listId, // Sends back listId
           links: { // Returns link to fetch course list
