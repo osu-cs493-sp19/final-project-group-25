@@ -16,7 +16,9 @@ const {
   getCourseList,
   checkIfCourseListExists,
   insertEnrollment,
-  modifyEnrollment
+  modifyEnrollment,
+  getCourseRoster,
+  getCourseAssignments
 } = require('../models/course');
 
 /*
@@ -229,4 +231,43 @@ router.post('/:id/students', async (req, res) => {
 });
 
 
+router.get('/:id/roster', async (req, res) => {
+
+// Code to authenticate that it is an instructor or admin who is accessing this dada
+
+try{
+    const courseId = req.params.id;
+  const csv = await getCourseRoster(courseId);
+  res.attachment('roster.csv');
+  res.status(200).send(csv);
+}
+
+catch(err){
+console.error("Specified Course ID was not found");
+res.status(404).send({
+  error: "Specified Course ID was not found!"
+});
+
+}
+});
+
+router.get('/:id/assignments', async (req, res) => {
+
+// Code to authenticate that it is an instructor or admin who is accessing this dada
+
+try{
+    const courseId = req.params.id;
+  const assignments = await getCourseAssignments(courseId);
+  res.status(200).send({
+    assignments: assignments
+  });
+}
+catch(err){
+console.error("Specified Course ID was not found");
+res.status(404).send({
+  error: "Specified Course ID was not found!"
+});
+
+}
+});
 module.exports = router;

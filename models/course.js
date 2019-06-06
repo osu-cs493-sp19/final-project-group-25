@@ -1,9 +1,9 @@
 /*
  * Course schema and data accessor methods;
  */
-
+const { Parser } = require('json2csv');
 const { ObjectId } = require('mongodb');
-
+const stringify = require('csv-stringify');
 const { getDBReference } = require('../lib/mongo');
 const { extractValidFields } = require('../lib/validation');
 
@@ -216,3 +216,86 @@ async function modifyEnrollment(courseId, modifications) {
   }
 }
 exports.modifyEnrollment = modifyEnrollment;
+
+async function getCourseRoster(courseId){
+  const db = getDBReference();
+  const collection = db.collection('courseLists');
+  const userCollection = db.collection('users');
+  if(!ObjectId.isValid(courseId)){
+        console.log("Enter a valid course ID please");
+        return null;
+  }else{
+      const class_data = await collection.find({ courseId: courseId }).toArray();
+      //recieved object for the business
+      var dataList = [];
+      const studentsArray = class_data[0].enrolled;
+      for(var i =0; i < studentsArray.length;i++){
+        if(ObjectId.isValid(studentsArray[i])){
+          var studentInfo = await userCollection.find({_id: new ObjectId(studentsArray[i])}).toArray();
+
+          // var studentInfo = [
+          //   {
+          //       "name": "Rob Hess",
+          //       "email": "robhess@gmail.com",
+          //       "password": "hunter2",
+          //       "role":"instructor"
+          //     },
+          //     {
+          //         "name": "Nikhil Anand",
+          //         "email": "nikhil@gmail.com",
+          //         "password": "password",
+          //         "role":"student"
+          //     },
+          //     {
+          //         "name": "Harsh Singh",
+          //         "email": "admin@gmail.com",
+          //         "password": "password",
+          //         "role":"admin"
+          //     }
+          // ]
+            dataList.push(studentInfo[0]); // should be 0 but putting i for testing
+          }
+        }
+        const fields = ['_id','name','email'];
+        // const fields = ['role','name','email'];
+        const json2csvParser = new Parser({fields});
+        const csvFile = json2csvParser.parse(dataList);
+        console.log("The csv file is: ", csvFile);
+        // console.log("The id we are looking for is: ",courseId,"The students we found are : ",students);
+        return csvFile;
+
+  }
+}
+exports.getCourseRoster = getCourseRoster;
+
+
+
+async function getCourseAssignments(courseId){
+  const db = getDBReference();
+  const collection = db.collection('assignments');
+  var courseAssignments = [];
+  if(!ObjectId.isValid(courseId)){
+        console.log("Enter a valid course ID please");
+        return null;
+  }else{
+      const assignments = await collection.find({ courseId: courseId }).toArray();
+      // const assignments = [
+      //   {
+      //       "_id": "999"
+      //     },
+      //     {
+      //       "_id": "222"
+      //     },
+      //     {
+      //       "_id": "333"
+      //     }
+      // ]
+        //recieved object with all the assignments for a course
+      for(var i =0; i < assignments.length;i++){
+        courseAssignments.push(assignments[i]._id);
+    }
+    return courseAssignments;
+  }
+}
+
+exports.getCourseAssignments = getCourseAssignments;
