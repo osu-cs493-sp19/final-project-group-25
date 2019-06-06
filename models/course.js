@@ -23,8 +23,8 @@ exports.CourseSchema = CourseSchema;
 * Schema describing required/optional fields of a course enrollment object.
 */
 const EnrollmentSchema = {
-  add: { required: false },
-  remove: { required: false }
+  add: { required: true },
+  remove: { required: true }
 };
 exports.EnrollmentSchema = EnrollmentSchema;
 
@@ -137,32 +137,45 @@ exports.deleteCourse = deleteCourse;
 async function getCourseList(courseId) {
   const db = getDBReference();
   const collection = db.collection('courseLists');
-  //if (!ObjectId.isValid(courseId)) {
-  //  return null;
-  //} else {
+  if (!ObjectId.isValid(courseId)) {
+    return null;
+  } else {
     const results = await collection
       .find({ courseId: courseId })
       .toArray();
     return results[0];
-  //}
+  }
 }
 exports.getCourseList = getCourseList;
 
+/*
+ * Executes a DB query to check if a course enrollment list exists for a given course
+ */
+async function checkIfCourseListExists(courseId) {
+  const db = getDBReference();
+  const collection = db.collection('courseLists');
+  const course = await collection.findOne({ courseId: courseId });
+  if (course != null) {
+    return true;
+  } else {
+    return false;
+  }
+}
+exports.checkIfCourseListExists = checkIfCourseListExists;
 
 /*
  * Executes a DB query to insert enrollment information about a single specified
  * course list on its ID.
  */
  async function insertEnrollment(courseId, modifications) {
-   console.log("== in insertEnrollment");
    const db = getDBReference();
    const collection = db.collection('courseLists');
    if (!ObjectId.isValid(courseId)) {
      return null;
    } else {
-       var newEnrollmentList = ["000", "000", "000"];
-       // Modify enrollment object based on modifications
-
+       // Create enrollment list based on modifications add
+       var newEnrollmentList = []; // Empty enrollment list
+       var newEnrollmentList = newEnrollmentList.concat(modifications.add);
        // Insert a new course list
        const result = await collection.insertOne({
          courseId: courseId,
@@ -183,12 +196,16 @@ async function modifyEnrollment(courseId, modifications) {
   if (!ObjectId.isValid(courseId)) {
     return null;
   } else {
-      var newEnrollmentList = ["999", "999", "999"];
+      var newEnrollmentList = []; // Empty new enrollment list
       // Find the list id based on provided course id if exists
       const course = await collection.find({ courseId: courseId }).toArray();
-      const listId = course[0]._id;
+      const courseList = course[0]; // Store course list cursor
+      const listId = courseList._id; // Course list id
+      const studentIds = courseList.enrolled; // Course list studentids
 
       // Modify enrollment object based on modifications
+      newEnrollmentList = studentIds.concat(modifications.add); // Add ids
+      newEnrollmentList = newEnrollmentList.filter(x => modifications.remove.indexOf(x) == -1); // Remove ids
 
       // Update list with modified object
       const result = await collection.updateOne(

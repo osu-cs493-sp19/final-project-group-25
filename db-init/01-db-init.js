@@ -25,28 +25,18 @@ db.courses.insertMany([
     "number": "493",
     "title": "Cloud Application Development",
     "term": "sp19",
-    "instructorId": "123",
-    "enrolled": [
-      "123",
-      "456",
-      "789"
-    ]
+    "instructorId": "123"
   },
   {
     "subject": "CS",
     "number": "492",
     "title": "Mobile Application Development",
     "term": "sp19",
-    "instructorId": "456",
-    "enrolled": [
-      "456",
-      "000",
-      "123"
-    ]
+    "instructorId": "456"
   }
 ]);
 
-db.courseLists.insertMany([
+/*db.courseLists.insertMany([
   {
     "courseId": "abc123",
     "enrolled": [
@@ -63,4 +53,4 @@ db.courseLists.insertMany([
       "123"
     ]
   }
-]);
+]);*/
