@@ -3,7 +3,7 @@
  */
 
 const { ObjectId } = require('mongodb');
-
+const stringify = require('csv-stringify');
 const { getDBReference } = require('../lib/mongo');
 const { extractValidFields } = require('../lib/validation');
 
@@ -199,3 +199,31 @@ async function modifyEnrollment(courseId, modifications) {
   }
 }
 exports.modifyEnrollment = modifyEnrollment;
+
+async function getCourseRoster(courseId){
+  const db = getDBReference();
+  const collection = db.collection('courseLists');
+  const userCollection = db.collection('courses');
+  // if(!ObjectId.isValid(courseId)){
+        // console.log("Enter a valid course ID please");
+        // return null;
+  // }else{
+      const class = await collection.find({ courseId: courseId }).toArray();
+      //recieved object for the business
+      var studentInfo = {};
+      var studentObject;
+      const studentsArray = class[0].enrolled;
+      var studentInfoList = [];
+      for(int i =0; i < studentsArray.length;i++){
+        if(ObjectId.isValid(studentsArray[i])){
+            studentInfo = await userCollection.find({_id: new ObjectId(studentsArray[i])}).toArray();
+            studentInfo = studentInfo[0];
+            studentObject = studentInfo._id + ","+ "'"+studentInfo.name + "'"+studentInfo.email;
+            studentInfoList[i] = studentObject;
+          }
+        // console.log("The id we are looking for is: ",courseId,"The students we found are : ",students);
+        return null;
+
+  // }
+}
+exports.getCourseRoster = getCourseRoster;

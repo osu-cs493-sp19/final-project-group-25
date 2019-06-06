@@ -15,7 +15,8 @@ const {
   deleteCourse,
   getCourseList,
   insertEnrollment,
-  modifyEnrollment
+  modifyEnrollment,
+  getCourseRoster
 } = require('../models/course');
 
 /*
@@ -222,6 +223,25 @@ router.post('/:id/students', async (req, res) => {
       error: "Unauthorized to access the specified resource"
     });
   }*/
+});
+
+
+router.get('/:id/roster', async (req, res) => {
+
+// Code to authenticate that it is an instructor or admin who is accessing this dada
+
+try{
+    const courseId = req.params.id;
+  const studentsArray = await getCourseRoster(courseId);
+  res.status(200).send();
+}
+catch(err){
+console.error("This was the error: ",err);
+
+}
+
+
+
 });
 
 
