@@ -1,10 +1,12 @@
 /* Main server file CS493 Group 25 Final Project */
+
 const express = require('express');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
+
 const api = require('./api');
 const { connectToDB } = require('./lib/mongo');
-const amqp = require('amqplib');
+//const amqp = require('amqplib');
 
 const app = express();
 const port = process.env.PORT || 8000;
@@ -12,9 +14,9 @@ const port = process.env.PORT || 8000;
 /*
  * Morgan is a popular logger.
  */
-// app.use(morgan('dev'));
+app.use(morgan('dev'));
 
-// app.use(bodyParser.json());
+app.use(bodyParser.json());
 app.use(express.static('public'));
 
 
@@ -32,14 +34,8 @@ app.use('*', function (req, res, next) {
   });
 });
 
-connectToDB( () => {
-  // try{
-    app.listen(port, () => {
-      // console.log("The url is: ",rabbitmqUrl);
-      console.log("== Server is running on port", port);
-    });
-  // } catch(err){
-  //   console.log("Cannot run server: ",err);
-  // }
-
+connectToDB(() => {
+  app.listen(port, () => {
+    console.log("== Server is running on port", port);
+  });
 });
