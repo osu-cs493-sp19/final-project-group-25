@@ -153,3 +153,5 @@ router.get('/:id/submissions', requireAuthentication, async (req, res) => {
     });
   }
 });
+
+module.exports = router;

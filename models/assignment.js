@@ -2,6 +2,8 @@
  * Course schema and data accessor methods;
  */
 
+
+const router = require('express').Router();
 const { ObjectId } = require('mongodb');
 
 const { getDBReference } = require('../lib/mongo');
@@ -78,3 +80,6 @@ async function getAssignmentsById (id) {
 }
 
 exports.getAssignmentsById = getAssignmentsById;
+
+
+module.exports = router;
