@@ -2,19 +2,19 @@ db.users.insertMany([
   {
       "name": "Rob Hess",
       "email": "robhess@gmail.com",
-      "password": "hunter2",
+      "password": "$2a$08$Kb1f8JbT/9kl.wRuRsRoYO19ddMcc79zXvfUcwchJJ1qHxVMDJN1K",
       "role":"instructor"
     },
     {
         "name": "Nikhil Anand",
         "email": "nikhil@gmail.com",
-        "password": "password",
+        "password": "$2a$08$Kb1f8JbT/9kl.wRuRsRoYO19ddMcc79zXvfUcwchJJ1qHxVMDJN1K",
         "role":"student"
     },
     {
         "name": "Harsh Singh",
         "email": "admin@gmail.com",
-        "password": "password",
+        "password": "$2a$08$Kb1f8JbT/9kl.wRuRsRoYO19ddMcc79zXvfUcwchJJ1qHxVMDJN1K",
         "role":"admin"
     }
 ]);
