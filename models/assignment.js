@@ -39,7 +39,9 @@ async function insertNewAssignment (assignment) {
   const result = await collection.insertOne(assignment);
   return result.insertedId;
 }
-exports.insertNewCourse = insertNewCourse;
+exports.insertNewAssignment = insertNewAssignment;
+
+
 
 exports.insertNewAssignment = insertNewAssignment;
 
