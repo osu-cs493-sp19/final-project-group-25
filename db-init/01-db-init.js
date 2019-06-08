@@ -36,7 +36,7 @@ db.courses.insertMany([
   }
 ]);
 
-/*db.courseLists.insertMany([
+db.courseLists.insertMany([
   {
     "courseId": "abc123",
     "enrolled": [
@@ -53,4 +53,4 @@ db.courses.insertMany([
       "123"
     ]
   }
-]);*/
+]);
