@@ -139,7 +139,7 @@ async function isTeacher(courseId, TeacherId){
 	const collection = db.collection('courses');
 	//test studentid : 5cfb0a0eebed9100134e4d6c
 	//test teacherid: 5cfb3e784811c4001213c41b
-	console.log("The teacherId we got is: ",TeacherId);
+	// console.log("The teacherId we got is: ",TeacherId);
 	try{
 		var course = await collection.find({_id: new ObjectId(courseId)}).toArray();
 		course = course[0];

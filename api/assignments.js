@@ -273,7 +273,7 @@ router.get('/downloads/submissions/:id',(req,res) =>{
     }
   })
   .on('file', (file) => {
-    res.status(200).send({message:"File download is now accessible!"}).type(file.metadata.contentType);
+    res.status(200).send({message:"File download is now accessible!"});
       // res.status(200).type(file.metadata.contentType);
   })
   .pipe(res);
