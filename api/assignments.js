@@ -130,9 +130,9 @@ router.put('/:id',    async (req, res, next) => {
 
 router.delete('/:id',async (req, res, next) => {
   // const is_admin = await isAdmin(req.user);
-  if (req.params.id == req.user || is_admin.id > 0) {    
+  if (!(req.params.id == req.user)) {    
   try {
-    const deleteSuccessful = await deleteAssignmentById(parseInt(req.params.id));
+    const deleteSuccessful = await deleteAssignmentById(req.params.id);
     if (deleteSuccessful) {
       res.status(204).end();
     } else {
