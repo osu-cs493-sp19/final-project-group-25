@@ -1,13 +1,20 @@
 const router = require('express').Router();
-
+const crypto = require('crypto');
 const { generateAuthToken, requireAuthentication } = require('../lib/auth');
 const { getAssignmentsById,
   getAssignmentById,
   insertNewAssignment,
-  replaceAssignmentById, 
-  deleteAssignmentById
+  replaceAssignmentById,
+  deleteAssignmentById,
+  isEnrolled,
+  submitFile,
+  isTeacher,
+  getCID,
+getSubmissionInfo,
+getDownloadStreamById
  } = require('../models/assignment');
-
+ const multer = require('multer');
+const fs = require('fs');
 const { extractValidFields } = require('../lib/validation');
 const { validateAgainstSchema } = require('../lib/validation');
 
@@ -17,13 +24,44 @@ const AssignmentSchema = {
 	due: { required: true },
 	title: { required: true}
 };
-/* 
+const fileTypes = {
+  'application/pdf': 'pdf'
+};
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: `${__dirname}/uploads`,
+    filename: (req, file, callback) => {
+      const basename = crypto.pseudoRandomBytes(16).toString('hex');
+      const extension = fileTypes[file.mimetype];
+      callback(null, `${basename}.${extension}`);
+    }
+  }),
+  fileFilter: (req, file, callback) => {
+    callback(null, !!fileTypes[file.mimetype])
+  }
+});
+
+
+function removeUploadedFile(file) {
+  return new Promise((resolve, reject) => {
+    fs.unlink(file.path, (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+
+}
+/*
 * Route to create a new photo.
 */
 
 router.post('/',    async (req, res) => {
   // const is_admin = await isAdmin(req.user)
-  if (req.params.id == req.user || is_admin.id > 0) {  
+  if (req.params.id == req.user || is_admin.id > 0) {
     // console.log(req.body, AssignmentSchema);
     if (validateAgainstSchema(req.body, AssignmentSchema)) {
       try {
@@ -74,9 +112,9 @@ router.get('/:id',    async (req, res) => {
  */
 router.put('/:id',    async (req, res, next) => {
 
-  // const is_admin = await isAdmin(req.user) 
-  // if (req.params.id == req.user || is_admin.id > 0) {  
-  if (!(req.params.id == req.user)) {  
+  // const is_admin = await isAdmin(req.user)
+  // if (req.params.id == req.user || is_admin.id > 0) {
+  if (!(req.params.id == req.user)) {
 
   if (validateAgainstSchema(req.body, AssignmentSchema)) {
     try {
@@ -129,7 +167,7 @@ router.put('/:id',    async (req, res, next) => {
 
 router.delete('/:id',async (req, res, next) => {
   // const is_admin = await isAdmin(req.user);
-  if (!(req.params.id == req.user)) {    
+  if (!(req.params.id == req.user)) {
   try {
     const deleteSuccessful = await deleteAssignmentById(req.params.id);
     if (deleteSuccessful) {
@@ -150,20 +188,96 @@ router.delete('/:id',async (req, res, next) => {
 }
 });
 
-router.get('/:id/submissions',    async (req, res) => {
-  try {
-    const assignment = await getAssignmentsById(parseInt(req.params.id));
-    if (assignment) {
-      res.status(200).send(assignment);
-    } else {
-      next();
+router.get('/:id/submissions', requireAuthentication,  async (req, res) => {
+  //check that it is an instructorId of the course
+  try{
+    const courseId = await getCID(req.params.id);
+    if(await isTeacher(courseId,req.user)){
+      const list_assign = await getSubmissionInfo(req.params.id);
+      if(list_assign){
+
+               res.status(200).send({submissions:list_assign});
+      }
+      else{
+        res.status(403).send({
+          error:"Unable to find submissions for this assignment"
+        });
+      }
+
     }
-  } catch (err) {
-    console.error(err);
+    else{
+      res.status(404).send({
+        error:"Please log in with valid teacher/admin account enrolled in the class you specified"
+      });
+    }
+  } catch(err){
     res.status(500).send({
-      error: "Unable to fetch assignment.  Please try again later."
-    });
+      error:"The error was: " + err
+    })
   }
+
+});
+
+router.post('/:id/submissions', upload.single('file'),requireAuthentication, async (req,res) =>{
+  // console.log("The file is: ",req.file);
+  if(req.file && req.body && req.body.assignmentId && req.body.studentId){
+  try{
+    const courseId = await getCID(req.params.id);
+    if(await isEnrolled(courseId,req.user)){
+      //in here if student is enrolled in the class provided by the ID
+      //the assignment id we are working with : 5cfb24c4916acb0011c71412
+      var timeSubmitted = new Date();
+      timeSubmitted.toISOString();
+      const submittedFile = {
+        path: req.file.path,
+        filename: req.file.filename,
+        contentType: req.file.mimetype,
+        assignmentId: req.body.assignmentId,
+        studentId: req.body.studentId,
+        timestamp: timeSubmitted
+      }
+      // console.log("We are submitting this: ",submittedFile);
+      const id = await submitFile(submittedFile);
+      await removeUploadedFile(req.file);
+      res.status(200).send({message:"New Submission Successfully added!",id:id});
+    }
+    else{
+      res.status(404).send({
+        error:"Please log in with valid student account enrolled in the class you specified"
+      });
+    }
+  } catch(err){
+    res.status(500).send({
+      error:"The error was: " + err
+    })
+  }
+  }
+ else{
+  res.status(400).send({
+    error:"Please send request with proper form-data"
+  });
+}
+});
+
+router.get('/downloads/submissions/:id',(req,res) =>{
+  getDownloadStreamById(req.params.id)
+  .on('error', (err) => {
+    if (err.code === 'ENOENT') {
+      res.status(404).send({
+        error: "Unable to present the submission, please provide a valid id."
+      });
+    } else {
+      res.status(500).send({
+        error: "Unable to fetch the submission.  Please try again later."
+      });
+    }
+  })
+  .on('file', (file) => {
+    res.status(200).send({message:"File download is now accessible!"}).type(file.metadata.contentType);
+      // res.status(200).type(file.metadata.contentType);
+  })
+  .pipe(res);
+
 });
 
 module.exports = router;

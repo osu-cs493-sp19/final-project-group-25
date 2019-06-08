@@ -33,7 +33,7 @@ exports.EnrollmentSchema = EnrollmentSchema;
  * Promise that resolves to an array containing the fetched page of courses.
  */
 async function getCoursePage(page) {
-  const db = getDBRgetAssignmentByIdgetAssignmentByIdeference();
+  const db = getDBReference();
   const collection = db.collection('courses');
   const count = await collection.countDocuments();
 
