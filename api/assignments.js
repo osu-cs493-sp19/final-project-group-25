@@ -24,7 +24,7 @@ const AssignmentSchema = {
 router.post('/',    async (req, res) => {
   // const is_admin = await isAdmin(req.user)
   if (req.params.id == req.user || is_admin.id > 0) {  
-    console.log(req.body, AssignmentSchema);
+    // console.log(req.body, AssignmentSchema);
     if (validateAgainstSchema(req.body, AssignmentSchema)) {
       try {
         const id = await insertNewAssignment(req.body);
@@ -54,7 +54,7 @@ router.post('/',    async (req, res) => {
 
 router.get('/:id',    async (req, res) => {
   try {
-    console.log(req.params.id);
+    // console.log(req.params.id);
     const assignment = await getAssignmentById(req.params.id);
     if (assignment) {
       res.status(200).send(assignment);
@@ -85,7 +85,6 @@ router.put('/:id',    async (req, res, next) => {
        * the existing photo.  If it doesn't, respond with a 403 error.  If the
        * photo doesn't already exist, respond with a 404 error.
        */
-      console.log("In router.put");
       const id = (req.params.id);
       const existingAssignment = await getAssignmentById(id);
       if (existingAssignment) {
