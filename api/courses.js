@@ -3,7 +3,7 @@
  */
 
 const router = require('express').Router();
-
+const { generateAuthToken, requireAuthentication } = require('../lib/auth');
 const { validateAgainstSchema } = require('../lib/validation');
 const {
   CourseSchema,
@@ -18,7 +18,8 @@ const {
   insertEnrollment,
   modifyEnrollment,
   getCourseRoster,
-  getCourseAssignments
+  getCourseAssignments,
+  isTeacher
 } = require('../models/course');
 
 /*
@@ -231,10 +232,11 @@ router.post('/:id/students', async (req, res) => {
 });
 
 
-router.get('/:id/roster', async (req, res) => {
+router.get('/:id/roster', requireAuthentication, async (req, res) => {
 
 // Code to authenticate that it is an instructor or admin who is accessing this dada
-
+// console.log("in roster function");
+  if(await isTeacher(req.params.id,req.user)){
 try{
     const courseId = req.params.id;
   const csv = await getCourseRoster(courseId);
@@ -247,6 +249,12 @@ console.error("Specified Course ID was not found");
 res.status(404).send({
   error: "Specified Course ID was not found!"
 });
+
+}
+} else{
+    res.status(404).send({
+      error:"Please log in with valid teacher/admin account enrolled in the class you specified"
+    });
 
 }
 });

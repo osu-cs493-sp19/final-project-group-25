@@ -260,7 +260,7 @@ async function getCourseRoster(courseId){
         // const fields = ['role','name','email'];
         const json2csvParser = new Parser({fields});
         const csvFile = json2csvParser.parse(dataList);
-        console.log("The csv file is: ", csvFile);
+        // console.log("The csv file is: ", csvFile);
         // console.log("The id we are looking for is: ",courseId,"The students we found are : ",students);
         return csvFile;
 
@@ -299,3 +299,25 @@ async function getCourseAssignments(courseId){
 }
 
 exports.getCourseAssignments = getCourseAssignments;
+
+
+
+async function isTeacher(courseId, TeacherId){
+	// console.log("The courseId is: ", courseId," and the Studentid is: ", studentId);
+	const db = getDBReference();
+	const collection = db.collection('courses');
+	//test studentid : 5cfb0a0eebed9100134e4d6c
+	//test teacherid: 5cfb3e784811c4001213c41b
+	// console.log("The teacherId we got is: ",TeacherId);
+	try{
+		var course = await collection.find({_id: new ObjectId(courseId)}).toArray();
+		course = course[0];
+		if(course.instructorId === TeacherId){
+			return true;
+		}
+		return false;
+	} catch(err){
+		return false;
+	}
+}
+exports.isTeacher = isTeacher;
