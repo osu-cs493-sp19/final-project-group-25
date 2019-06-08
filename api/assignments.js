@@ -5,17 +5,26 @@ const { getAssignmentsById,
   getAssignmentById,
   insertNewAssignment,
   replaceAssignmentById, 
-  deleteAssignmentById, 
-  isAdmin,
-  AssignmentSchema } = require('../models/assignment')
+  deleteAssignmentById
+ } = require('../models/assignment');
 
+const { extractValidFields } = require('../lib/validation');
+const { validateAgainstSchema } = require('../lib/validation');
+
+const AssignmentSchema = {
+	courseId: { required: true },
+	points: { required: true},
+	due: { required: true },
+	title: { required: true}
+};
 /* 
 * Route to create a new photo.
 */
 
-router.post('/', requireAuthentication, async (req, res) => {
-  const is_admin = await isAdmin(req.user)
+router.post('/',    async (req, res) => {
+  // const is_admin = await isAdmin(req.user)
   if (req.params.id == req.user || is_admin.id > 0) {  
+    console.log(req.body, AssignmentSchema);
     if (validateAgainstSchema(req.body, AssignmentSchema)) {
       try {
         const id = await insertNewAssignment(req.body);
@@ -43,9 +52,10 @@ router.post('/', requireAuthentication, async (req, res) => {
 }
 });
 
-router.get('/:id', requireAuthentication, async (req, res) => {
+router.get('/:id',    async (req, res) => {
   try {
-    const assignment = await getAssignmentById(parseInt(req.params.id));
+    console.log(req.params.id);
+    const assignment = await getAssignmentById(req.params.id);
     if (assignment) {
       res.status(200).send(assignment);
     } else {
@@ -62,10 +72,11 @@ router.get('/:id', requireAuthentication, async (req, res) => {
 /*
  * Route to update an assignment.
  */
-router.put('/:id', requireAuthentication, async (req, res, next) => {
+router.put('/:id',    async (req, res, next) => {
 
-  const is_admin = await isAdmin(req.user)
-  if (req.params.id == req.user || is_admin.id > 0) {  
+  // const is_admin = await isAdmin(req.user) 
+  // if (req.params.id == req.user || is_admin.id > 0) {  
+  if (!(req.params.id == req.user)) {  
 
   if (validateAgainstSchema(req.body, AssignmentSchema)) {
     try {
@@ -74,16 +85,18 @@ router.put('/:id', requireAuthentication, async (req, res, next) => {
        * the existing photo.  If it doesn't, respond with a 403 error.  If the
        * photo doesn't already exist, respond with a 404 error.
        */
-      const id = parseInt(req.params.id);
+      console.log("In router.put");
+      const id = (req.params.id);
       const existingAssignment = await getAssignmentById(id);
       if (existingAssignment) {
-        if (req.body.couseid === existingAssignment.courseid) { // && req.body.userid === existingAssignment.userid) {  // CHANGE
+        // console.log(existingAssignment, req.body.courseId)
+        if (req.body.courseId === existingAssignment.courseId) { // && req.body.userid === existingAssignment.userid) {  // CHANGE
           const updateSuccessful = await replaceAssignmentById(id, req.body);
           if (updateSuccessful) {
             res.status(200).send({
               links: {
-                course: `/courses/${req.body.courseid}`,
-                users: `/users/${req.body.courseid}`
+                course: `/courses/${req.body.courseId}`
+                // users: `/users/${req.body._id}`
               }
             });
           } else {
@@ -115,8 +128,8 @@ router.put('/:id', requireAuthentication, async (req, res, next) => {
 }
 });
 
-router.delete('/:id', requireAuthentication, async (req, res, next) => {
-  const is_admin = await isAdmin(req.user)
+router.delete('/:id',async (req, res, next) => {
+  // const is_admin = await isAdmin(req.user);
   if (req.params.id == req.user || is_admin.id > 0) {    
   try {
     const deleteSuccessful = await deleteAssignmentById(parseInt(req.params.id));
@@ -138,7 +151,7 @@ router.delete('/:id', requireAuthentication, async (req, res, next) => {
 }
 });
 
-router.get('/:id/submissions', requireAuthentication, async (req, res) => {
+router.get('/:id/submissions',    async (req, res) => {
   try {
     const assignment = await getAssignmentsById(parseInt(req.params.id));
     if (assignment) {
