@@ -7,24 +7,30 @@ const { validateAgainstSchema } = require('../lib/validation');
 const { generateAuthToken, requireAuthentication } = require('../lib/auth');
 const { UserSchema, LoginSchema, insertNewUser, getUserById , getUserByEmail, validateUser } = require('../models/user');
 
-router.post('/',  async (req, res, next) => {
-   if (req.body && req.body.name && req.body.email && req.body.password && req.body.role) {
-     console.log("==CONTAINS VALID BODY")
-     try {
-       const id = await insertNewUser(req.body);
-       console.log("==INSERTED " + id)
-       res.status(201).send({
-         id: id
-       });
-     } catch (err) {
-       console.error(err);
-       res.status(500).send({
-         error: "Error inserting user into DB.  Please try again later."
+router.post('/', requireAuthentication, async (req, res, next) => {
+  if (req.body.role == "student" || ((req.body.role == "admin" || req.body.role == "instructor") && req.auth == "admin")) {
+     if (req.body && req.body.name && req.body.email && req.body.password && req.body.role) {
+       console.log("==CONTAINS VALID BODY")
+       try {
+         const id = await insertNewUser(req.body);
+         console.log("==INSERTED " + id)
+         res.status(201).send({
+           id: id
+         });
+       } catch (err) {
+         console.error(err);
+         res.status(500).send({
+           error: "Error inserting user into DB.  Please try again later."
+         });
+       }
+     } else {
+       res.status(400).send({
+         error: "Request body is not a valid user object."
        });
      }
    } else {
-     res.status(400).send({
-       error: "Request body is not a valid business object."
+     res.status(403).send({
+       error: "Must be admin to create admin or instructor"
      });
    }
 });

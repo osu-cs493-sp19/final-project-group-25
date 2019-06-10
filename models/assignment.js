@@ -15,10 +15,7 @@ const AssignmentSchema = {
 	due: { required: true },
 	title: { required: true}
 };
-
 exports.AssignmentSchema = AssignmentSchema;
-//   getAssignmentsById,
-//   isAdmin,
 
 async function getAssignmentById (id) {
   const db = getDBReference();
@@ -33,7 +30,6 @@ async function getAssignmentById (id) {
     return results[0];
   }
 }
-
 exports.getAssignmentById = getAssignmentById;
 
 async function insertNewAssignment (assignment) {
@@ -44,8 +40,6 @@ async function insertNewAssignment (assignment) {
   return result.insertedId;
 }
 exports.insertNewAssignment = insertNewAssignment;
-
-
 
 
 async function replaceAssignmentById (id, body) {
@@ -103,8 +97,6 @@ async function isEnrolled(courseId, studentId){
 	} catch(err){
 		return false;
 	}
-
-
 }
 exports.isEnrolled = isEnrolled;
 
@@ -175,6 +167,7 @@ async function getSubmissionInfo(data){
 
 }
 exports.getSubmissionInfo = getSubmissionInfo
+
 async function getCID(id){
 	const db = getDBReference();
 	const collection = db.collection('assignments');
@@ -183,7 +176,8 @@ async function getCID(id){
 }
 exports.getCID = getCID;
 
-exports.getDownloadStreamById = function (id) {
+
+exports.getDownloadStreamById = async function (id) {
   const db = getDBReference();
   const bucket = new GridFSBucket(db, { bucketName: 'submissions' });
 	if (!ObjectId.isValid(id)) {
