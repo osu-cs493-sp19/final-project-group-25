@@ -232,27 +232,6 @@ async function getCourseRoster(courseId){
       for(var i =0; i < studentsArray.length;i++){
         if(ObjectId.isValid(studentsArray[i])){
           var studentInfo = await userCollection.find({_id: new ObjectId(studentsArray[i])}).toArray();
-
-          // var studentInfo = [
-          //   {
-          //       "name": "Rob Hess",
-          //       "email": "robhess@gmail.com",
-          //       "password": "hunter2",
-          //       "role":"instructor"
-          //     },
-          //     {
-          //         "name": "Nikhil Anand",
-          //         "email": "nikhil@gmail.com",
-          //         "password": "password",
-          //         "role":"student"
-          //     },
-          //     {
-          //         "name": "Harsh Singh",
-          //         "email": "admin@gmail.com",
-          //         "password": "password",
-          //         "role":"admin"
-          //     }
-          // ]
             dataList.push(studentInfo[0]); // should be 0 but putting i for testing
           }
         }
@@ -277,20 +256,8 @@ async function getCourseAssignments(courseId){
   if(!ObjectId.isValid(courseId)){
         console.log("Enter a valid course ID please");
         return null;
-  }else{
+  } else {
       const assignments = await collection.find({ courseId: courseId }).toArray();
-      // const assignments = [
-      //   {
-      //       "_id": "999"
-      //     },
-      //     {
-      //       "_id": "222"
-      //     },
-      //     {
-      //       "_id": "333"
-      //     }
-      // ]
-        //recieved object with all the assignments for a course
       for(var i =0; i < assignments.length;i++){
         courseAssignments.push(assignments[i]._id);
     }
@@ -301,14 +268,10 @@ async function getCourseAssignments(courseId){
 exports.getCourseAssignments = getCourseAssignments;
 
 
-
 async function isTeacher(courseId, TeacherId){
-	// console.log("The courseId is: ", courseId," and the Studentid is: ", studentId);
 	const db = getDBReference();
 	const collection = db.collection('courses');
-	//test studentid : 5cfb0a0eebed9100134e4d6c
-	//test teacherid: 5cfb3e784811c4001213c41b
-	// console.log("The teacherId we got is: ",TeacherId);
+	console.log("==The teacherId we got is: " + TeacherId);
 	try{
 		var course = await collection.find({_id: new ObjectId(courseId)}).toArray();
 		course = course[0];

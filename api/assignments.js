@@ -10,8 +10,8 @@ const { getAssignmentsById,
   submitFile,
   isTeacher,
   getCID,
-getSubmissionInfo,
-getDownloadStreamById
+  getSubmissionInfo,
+  getDownloadStreamById
  } = require('../models/assignment');
  const multer = require('multer');
 const fs = require('fs');
@@ -56,13 +56,10 @@ function removeUploadedFile(file) {
 
 }
 /*
-* Route to create a new photo.
+* Route to create a new assignemt. ONLY ADMIN or instructor.
 */
-
-router.post('/',    async (req, res) => {
-  // const is_admin = await isAdmin(req.user)
-  if (req.params.id == req.user || is_admin.id > 0) {
-    // console.log(req.body, AssignmentSchema);
+router.post('/', requireAuthentication, async (req, res) => {
+  if (req.auth == "admin" || req.auth == "instructor") {
     if (validateAgainstSchema(req.body, AssignmentSchema)) {
       try {
         const id = await insertNewAssignment(req.body);
@@ -90,9 +87,8 @@ router.post('/',    async (req, res) => {
 }
 });
 
-router.get('/:id',    async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
-    // console.log(req.params.id);
     const assignment = await getAssignmentById(req.params.id);
     if (assignment) {
       res.status(200).send(assignment);
@@ -108,56 +104,53 @@ router.get('/:id',    async (req, res) => {
 });
 
 /*
- * Route to update an assignment.
+ * Route to update an assignment. ONLY ADMIN or instructor.
  */
-router.put('/:id',    async (req, res, next) => {
-
-  // const is_admin = await isAdmin(req.user)
-  // if (req.params.id == req.user || is_admin.id > 0) {
-  if (!(req.params.id == req.user)) {
-
-  if (validateAgainstSchema(req.body, AssignmentSchema)) {
-    try {
-      /*
-       * Make sure the updated photo has the same businessID and userID as
-       * the existing photo.  If it doesn't, respond with a 403 error.  If the
-       * photo doesn't already exist, respond with a 404 error.
-       */
-      const id = (req.params.id);
-      const existingAssignment = await getAssignmentById(id);
-      if (existingAssignment) {
-        // console.log(existingAssignment, req.body.courseId)
-        if (req.body.courseId === existingAssignment.courseId) { // && req.body.userid === existingAssignment.userid) {  // CHANGE
-          const updateSuccessful = await replaceAssignmentById(id, req.body);
-          if (updateSuccessful) {
-            res.status(200).send({
-              links: {
-                course: `/courses/${req.body.courseId}`
-                // users: `/users/${req.body._id}`
-              }
-            });
+router.patch('/:id', requireAuthentication, async (req, res, next) => {
+  const course = getCID(req.params.id);
+  if (req.auth == "admin" || (req.auth == "instructor" && await isTeacher(course, req.user))) {
+    if (validateAgainstSchema(req.body, AssignmentSchema)) {
+      try {
+        /*
+         * Make sure the updated photo has the same businessID and userID as
+         * the existing photo.  If it doesn't, respond with a 403 error.  If the
+         * photo doesn't already exist, respond with a 404 error.
+         */
+        const id = (req.params.id);
+        const existingAssignment = await getAssignmentById(id);
+        if (existingAssignment) {
+          // console.log(existingAssignment, req.body.courseId)
+          if (req.body.courseId === existingAssignment.courseId) { // && req.body.userid === existingAssignment.userid) {  // CHANGE
+            const updateSuccessful = await replaceAssignmentById(id, req.body);
+            if (updateSuccessful) {
+              res.status(200).send({
+                links: {
+                  course: `/courses/${req.body.courseId}`
+                  // users: `/users/${req.body._id}`
+                }
+              });
+            } else {
+              next();
+            }
           } else {
-            next();
+            res.status(403).send({
+              error: "Updated assignment must have the same courseId"
+            });
           }
         } else {
-          res.status(403).send({
-            error: "Updated assignment must have the same courseId"
-          });
+          next();
         }
-      } else {
-        next();
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({
+          error: "Unable to update assignment.  Please try again later."
+        });
       }
-    } catch (err) {
-      console.error(err);
-      res.status(500).send({
-        error: "Unable to update assignment.  Please try again later."
+    } else {
+      res.status(400).send({
+        error: "Request body is not a valid assignment object."
       });
     }
-  } else {
-    res.status(400).send({
-      error: "Request body is not a valid assignment object."
-    });
-  }
 } else {
   res.status(403).json({
     error: "Unauthorized to access the specified resource"
@@ -165,9 +158,10 @@ router.put('/:id',    async (req, res, next) => {
 }
 });
 
-router.delete('/:id',async (req, res, next) => {
-  // const is_admin = await isAdmin(req.user);
-  if (!(req.params.id == req.user)) {
+// ONLY ADMIN or instructor.
+router.delete('/:id', requireAuthentication, async (req, res, next) => {
+  const course = getCID(req.params.id);
+  if (req.auth == "admin" || (req.auth == "instructor" && await isTeacher(course, req.user))) {
   try {
     const deleteSuccessful = await deleteAssignmentById(req.params.id);
     if (deleteSuccessful) {
@@ -178,7 +172,7 @@ router.delete('/:id',async (req, res, next) => {
   } catch (err) {
     console.error(err);
     res.status(500).send({
-      error: "Unable to delete photo.  Please try again later."
+      error: "Unable to delete assignment.  Please try again later."
     });
   }
 } else {
@@ -188,11 +182,13 @@ router.delete('/:id',async (req, res, next) => {
 }
 });
 
+// ONLY ADMIN or instructor.
 router.get('/:id/submissions', requireAuthentication,  async (req, res) => {
-  //check that it is an instructorId of the course
+  const course = getCID(req.params.id);
+  if (req.auth == "admin" || (req.auth == "instructor" && await isTeacher(course, req.user))) {
   try{
     const courseId = await getCID(req.params.id);
-    if(await isTeacher(courseId,req.user)){
+    if(await isTeacher(courseId, req.user)){
       const list_assign = await getSubmissionInfo(req.params.id);
       if(list_assign){
 
@@ -215,9 +211,15 @@ router.get('/:id/submissions', requireAuthentication,  async (req, res) => {
       error:"The error was: " + err
     })
   }
-
+} else {
+  res.status(403).json({
+    error: "Unauthorized to access the specified resource"
+  });
+}
 });
 
+
+// ONLY enrolled student
 router.post('/:id/submissions', upload.single('file'),requireAuthentication, async (req,res) =>{
   // console.log("The file is: ",req.file);
   if(req.file && req.body && req.body.assignmentId && req.body.studentId){
@@ -259,25 +261,32 @@ router.post('/:id/submissions', upload.single('file'),requireAuthentication, asy
 }
 });
 
-router.get('/downloads/submissions/:id',(req,res) =>{
-  getDownloadStreamById(req.params.id)
-  .on('error', (err) => {
-    if (err.code === 'ENOENT') {
-      res.status(404).send({
-        error: "Unable to present the submission, please provide a valid id."
-      });
-    } else {
-      res.status(500).send({
-        error: "Unable to fetch the submission.  Please try again later."
-      });
+router.get('/downloads/submissions/:id', requireAuthentication, async (req,res) =>{
+  const courseId = await getCID(req.params.id);
+  if(await isEnrolled(courseId, req.user)){
+      await getDownloadStreamById(req.params.id)
+      .on('error', (err) => {
+        if (err.code === 'ENOENT') {
+          res.status(404).send({
+            error: "Unable to present the submission, please provide a valid id."
+          });
+        } else {
+          res.status(500).send({
+            error: "Unable to fetch the submission.  Please try again later."
+          });
+        }
+      })
+      .on('file', (file) => {
+        res.status(200).send({message:"File download is now accessible!"});
+          // res.status(200).type(file.metadata.contentType);
+      })
+      .pipe(res);
     }
-  })
-  .on('file', (file) => {
-    res.status(200).send({message:"File download is now accessible!"});
-      // res.status(200).type(file.metadata.contentType);
-  })
-  .pipe(res);
-
+  else{
+    res.status(404).send({
+      error:"Please log in with valid student account enrolled in the class you specified"
+    });
+}
 });
 
 module.exports = router;
