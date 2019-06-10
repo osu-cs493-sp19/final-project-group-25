@@ -3,7 +3,7 @@
  */
 
 const router = require('express').Router();
-
+const { generateAuthToken, requireAuthentication } = require('../lib/auth');
 const { validateAgainstSchema } = require('../lib/validation');
 const {
   CourseSchema,
@@ -18,7 +18,8 @@ const {
   insertEnrollment,
   modifyEnrollment,
   getCourseRoster,
-  getCourseAssignments
+  getCourseAssignments,
+  isTeacher
 } = require('../models/course');
 
 /*
@@ -50,11 +51,12 @@ router.get('/', async (req, res) => {
 });
 
 /*
- * Route to create a new course.
+ * Route to create a new course. ONLY ADMIN.
  */
-//router.post('/', requireAuthentication, async (req, res) => {
-router.post('/', async (req, res) => {
-  //if (req.body.ownerid == req.user || req.admin == 1) {
+router.post('/', requireAuthentication, async (req, res) => {
+//router.post('/', async (req, res) => {
+  console.log("==req.auth " + req.auth);
+  if (req.auth == "admin") {
     if (validateAgainstSchema(req.body, CourseSchema)) {
       try {
         const id = await insertNewCourse(req.body);
@@ -75,11 +77,11 @@ router.post('/', async (req, res) => {
         error: "Request body is not a valid course object."
       });
     }
-  /*} else {
+  } else {
     res.status(403).send({
       error: "Unauthorized to access the specified resource"
     });
-  }*/
+  }
 });
 
 
@@ -103,11 +105,12 @@ router.get('/:id', async (req, res, next) => {
 });
 
 /*
- * Route to replace data for a business.
+ * Route to replace data for a course. ONLY ADMIN & INSTRUCTOR.
  */
-//router.put('/:id', requireAuthentication, async (req, res, next) => {
-router.patch('/:id', async (req, res, next) => {
-  //if (req.body.ownerid == req.user || req.admin == 1) {
+router.patch('/:id', requireAuthentication, async (req, res, next) => {
+//router.patch('/:id', async (req, res, next) => {
+  console.log("==req.auth " + req.auth);
+  if (req.auth == "admin" || (req.auth == "instructor" && await isTeacher(req.params.id, req.user))) {
     if (validateAgainstSchema(req.body, CourseSchema)) {
       try {
         const id = req.params.id;
@@ -132,19 +135,20 @@ router.patch('/:id', async (req, res, next) => {
         error: "Request body is not a valid course object"
       });
     }
-  /*} else {
+  } else {
     res.status(403).send({
       error: "Unauthorized to access the specified resource"
     });
-  }*/
+  }
 });
 
 /*
- * Route to delete a course.
+ * Route to delete a course. ONLY ADMIN.
  */
-//router.delete('/:id', requireAuthentication, async (req, res, next) => {
-router.delete('/:id', async (req, res, next) => {
-  //if (req.body.ownerid == req.user || req.admin == 1) {
+router.delete('/:id', requireAuthentication, async (req, res, next) => {
+//router.delete('/:id', async (req, res, next) => {
+  console.log("==req.auth " + req.auth);
+  if (req.auth == "admin") {
     try {
       const deleteSuccessful = await deleteCourse(req.params.id);
       if (deleteSuccessful) {
@@ -158,29 +162,35 @@ router.delete('/:id', async (req, res, next) => {
         error: "Unable to delete course.  Please try again later."
       });
     }
-  /*} else {
+  } else {
     res.status(403).send({
       error: "Unauthorized to access the specified resource"
     });
-  }*/
+  }
 });
 
 
 /*
- * Route to fetch list of students enrolled in a specific course.
+ * Route to fetch list of students enrolled in a specific course. ONLY ADMIN and instructor
  */
-router.get('/:id/students', async (req, res, next) => {
-  try {
-    const course = await getCourseList(req.params.id);
-    if (course) {
-      res.status(200).send(course);
-    } else {
-      next();
+router.get('/:id/students', requireAuthentication, async (req, res, next) => {
+  if (req.auth == "admin" || (req.auth == "instructor" && await isTeacher(req.params.id, req.user))) {
+    try {
+      const course = await getCourseList(req.params.id);
+      if (course) {
+        res.status(200).send(course);
+      } else {
+        next();
+      }
+    } catch (err) {
+      console.error(err);
+      res.status(500).send({
+        error: "Unable to fetch course list.  Please try again later."
+      });
     }
-  } catch (err) {
-    console.error(err);
-    res.status(500).send({
-      error: "Unable to fetch course list.  Please try again later."
+  } else {
+    res.status(403).send({
+      error: "Unauthorized to access the specified resource"
     });
   }
 });
@@ -188,11 +198,11 @@ router.get('/:id/students', async (req, res, next) => {
 
 
 /*
- * Route to enroll students in a course.
+ * Route to enroll students in a course. ONLY ADMIN or instructor.
  */
 //router.post('/', requireAuthentication, async (req, res) => {
-router.post('/:id/students', async (req, res) => {
-  //if (req.body.ownerid == req.user || req.admin == 1) {
+router.post('/:id/students', requireAuthentication, async (req, res) => {
+  if (req.auth == "admin" || (req.auth == "instructor" && await isTeacher(req.params.id, req.user))) {
     if (validateAgainstSchema(req.body, EnrollmentSchema)) {
       try {
         const courseId = req.params.id; // Sets the course id
@@ -223,51 +233,54 @@ router.post('/:id/students', async (req, res) => {
         error: "Request body is not a valid enrollment list object."
       });
     }
-  /*} else {
+  } else {
     res.status(403).send({
       error: "Unauthorized to access the specified resource"
     });
-  }*/
+  }
 });
 
-
-router.get('/:id/roster', async (req, res) => {
-
-// Code to authenticate that it is an instructor or admin who is accessing this dada
-
-try{
-    const courseId = req.params.id;
-  const csv = await getCourseRoster(courseId);
-  res.attachment('roster.csv');
-  res.status(200).send(csv);
-}
-
-catch(err){
-console.error("Specified Course ID was not found");
-res.status(404).send({
-  error: "Specified Course ID was not found!"
+// ONLY ADMIN or instructor.
+router.get('/:id/roster', requireAuthentication, async (req, res) => {
+  if(req.auth == "admin" || (req.auth == "instructor" && await isTeacher(req.params.id, req.user))){
+    try{
+        const courseId = req.params.id;
+      const csv = await getCourseRoster(courseId);
+      res.attachment('roster.csv');
+      res.status(200).send(csv);
+    }
+    catch(err){
+      console.error("Specified Course ID was not found");
+      res.status(404).send({
+        error: "Specified Course ID was not found!"
+      });
+    }
+  } else {
+      res.status(403).send({
+        error:"Please log in with valid teacher/admin account for the class you specified"
+      });
+  }
 });
 
-}
-});
-
-router.get('/:id/assignments', async (req, res) => {
-
-// Code to authenticate that it is an instructor or admin who is accessing this dada
-
-try{
-    const courseId = req.params.id;
-  const assignments = await getCourseAssignments(courseId);
-  res.status(200).send({
-    assignments: assignments
-  });
-}
-catch(err){
-console.error("Specified Course ID was not found");
-res.status(404).send({
-  error: "Specified Course ID was not found!"
-});
-
-}
+router.get('/:id/assignments', requireAuthentication, async (req, res) => {
+  if(req.auth == "admin" || (req.auth == "instructor" && await isTeacher(req.params.id, req.user))){
+    try{
+      const courseId = req.params.id;
+      const assignments = await getCourseAssignments(courseId);
+      res.status(200).send({
+        assignments: assignments
+      });
+    }
+    catch(err){
+      console.error("Specified Course ID was not found");
+      res.status(404).send({
+        error: "Specified Course ID was not found!"
+      });
+    }
+  } else {
+      res.status(403).send({
+        error:"Please log in with valid teacher/admin account for the class you specified"
+      });
+  }
 });
 module.exports = router;
