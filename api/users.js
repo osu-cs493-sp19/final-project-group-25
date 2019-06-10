@@ -5,7 +5,7 @@
 const router = require('express').Router();
 const { validateAgainstSchema } = require('../lib/validation');
 const { generateAuthToken, requireAuthentication } = require('../lib/auth');
-const { UserSchema, LoginSchema, insertNewUser, getUserById , getUserByEmail, validateUser } = require('../models/user');
+const { UserSchema, LoginSchema, insertNewUser, getUserById , getUserByEmail, validateUser, getInstructorInformationById, getStudentInformationById } = require('../models/user');
 
 router.post('/', requireAuthentication, async (req, res, next) => {
   if (req.body.role == "student" || ((req.body.role == "admin" || req.body.role == "instructor") && req.auth == "admin")) {
@@ -79,6 +79,14 @@ router.get('/:id', requireAuthentication, async (req, res, next) => {
     try {
       const user = await getUserById(req.params.id, false);
       if(user) {
+        if (user.role = "instructor"){
+          const instruct = await getInstructorInformationById(req.params.id);
+          res.status(200).send(instruct);
+        }
+        if (user.role = "student"){
+          const stud = await getStudentInformationById(req.params.id);
+          res.status(200).send(stud);
+        }
         res.status(200).send(user);
       } else {
         next();

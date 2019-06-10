@@ -50,6 +50,55 @@ async function getUserByEmail(email) {
 }
 exports.getUserByEmail = getUserByEmail;
 
+async function getStudentInformationById(id) {
+  const student = await getUserById(id);
+  if (student) {
+    student.courses = await getCoursesByStudentId(id);
+  }
+  return student;
+}
+exports.getStudentInformationById = getStudentInformationById;
+
+async function getCoursesByStudentId(id) {
+  const db = getDBReference();
+  const collection = db.collection('students');
+  if (!ObjectId.isValid(id)){
+    return [];
+  } else {
+    const results = await collection
+      .find({ 'studentId.$id': new ObjectId(id) })
+      .project({ studentId:0, _id:0})
+      .toArray();
+    return results;
+  }
+}
+exports.getCoursesByStudentId = getCoursesByStudentId;
+
+async function getInstructorInformationById(id) {
+  const instructor = await getUserById(id);
+  if (instructor) {
+    instructor.courses = await getCoursesByInstructorId(id);
+  }
+  return instructor;
+}
+exports.getInstructorInformationById = getInstructorInformationById;
+
+async function getCoursesByInstructorId(id){
+  const db = getDBReference();
+  const collection = db.collection('courses');
+  if (!ObjectId.isValid(id)) {
+    return [];
+  } else {
+    const instructors = await collection
+      .find({'instructorId.$id': new ObjectId(id)})
+      .project({_id: 0})
+      .toArray();
+
+    return instructors;
+  }
+}
+exports.getCoursesByInstructorId = getCoursesByInstructorId;
+
 async function validateUser(id, password) {
   const user = await getUserById(id, true);
   const authenticated = user && await bcrypt.compare(password, user.password);
