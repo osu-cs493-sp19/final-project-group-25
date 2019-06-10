@@ -1,17 +1,28 @@
 version: '3.7'
 services:
+  redis:
+    image: redis
+    # command: ["redis-server", "--appendonly", "yes"]
+    restart: always
+    # ports:
+    #   - 6379:6379
+  
   api:
     build: .
     image: assignment-final-api
     restart: always
     ports:
       - 8000:8000
+      # - 6380:6379
+    links:
+      - redis
     environment:
       MONGO_DATABASE: ${MONGO_DATABASE}
       MONGO_USER: ${MONGO_USER}
       MONGO_PASSWORD: ${MONGO_PASSWORD}
       MONGO_HOST: mongodb
-      MONGO_PORT: 27017
+      MONGO_PORT: 27017x
+      
 
   mongodb:
     image: mongo:latest
@@ -26,5 +37,12 @@ services:
       MONGO_USER: ${MONGO_USER}
       MONGO_PASSWORD: ${MONGO_PASSWORD}
 
+  # docker-compose.yml
+  # Add this top-level entry
+  
+  
 volumes:
   mongo-data:
+
+
+  
