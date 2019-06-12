@@ -41,7 +41,7 @@ async function getCoursePage(page) {
    * Compute last page number and make sure page is within allowed bounds.
    * Compute offset into collection.
    */
-  const pageSize = 10;
+  const pageSize = 4;
   const lastPage = Math.ceil(count / pageSize);
   page = page > lastPage ? lastPage : page;
   page = page < 1 ? 1 : page;

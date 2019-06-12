@@ -7,8 +7,11 @@ const { validateAgainstSchema } = require('../lib/validation');
 const { generateAuthToken, requireAuthentication } = require('../lib/auth');
 const { UserSchema, LoginSchema, insertNewUser, getUserById , getUserByEmail, validateUser, getInstructorInformationById, getStudentInformationById } = require('../models/user');
 
-router.post('/', requireAuthentication, async (req, res, next) => {
-  if (req.body.role == "student" || ((req.body.role == "admin" || req.body.role == "instructor") && req.auth == "admin")) {
+router.post('/', async (req, res, next) => {
+  if((req.body.role == "admin" || req.body.role == "instructor")){
+    requireAuthentication();
+  }
+  if ((((req.body.role == "admin" || req.body.role == "instructor") && req.auth == "admin")) || req.body.role == "student") {
      if (req.body && req.body.name && req.body.email && req.body.password && req.body.role) {
        console.log("==CONTAINS VALID BODY")
        try {
