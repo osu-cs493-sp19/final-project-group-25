@@ -188,7 +188,7 @@ router.get('/:id/submissions', requireAuthentication,  async (req, res) => {
   if (req.auth == "admin" || (req.auth == "instructor" && await isTeacher(course, req.user))) {
   try{
     const courseId = await getCID(req.params.id);
-    if(await isTeacher(courseId, req.user)){
+    if(await isTeacher(courseId, req.user) || req.auth == "admin"){
       const list_assign = await getSubmissionInfo(req.params.id);
       if(list_assign){
 
@@ -225,7 +225,7 @@ router.post('/:id/submissions', upload.single('file'),requireAuthentication, asy
   if(req.file && req.body && req.body.assignmentId && req.body.studentId){
   try{
     const courseId = await getCID(req.params.id);
-    if(await isEnrolled(courseId,req.user)){
+    if(await isEnrolled(courseId,req.user) || req.auth == "admin" ){
       //in here if student is enrolled in the class provided by the ID
       //the assignment id we are working with : 5cfb24c4916acb0011c71412
       var timeSubmitted = new Date();
